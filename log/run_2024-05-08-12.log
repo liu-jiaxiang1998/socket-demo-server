@@ -1,0 +1,8 @@
+2024-05-08 12:00:24.482 [main] [com.alibaba.druid.pool.DruidDataSource] [998] INFO  - {dataSource-1} inited
+2024-05-08 12:00:24.533 [main] [com.example.socketdemo.utils.SQLUtil$1$1] [63] INFO  - ---事务已提交---
+2024-05-08 12:00:24.534 [main] [com.example.socketdemo.utils.SQLUtil$1$1] [67] INFO  - status 0
+2024-05-08 12:00:24.534 [main] [com.example.socketdemo.utils.SQLUtil$1$1] [70] INFO  - ---事务完成---
+2024-05-08 12:01:21.069 [main] [com.alibaba.druid.pool.DruidDataSource] [998] INFO  - {dataSource-1} inited
+2024-05-08 12:01:21.121 [main] [com.example.socketdemo.utils.SQLUtil$1$1] [63] INFO  - ---事务已提交---
+2024-05-08 12:01:21.121 [main] [com.example.socketdemo.utils.SQLUtil$1$1] [67] INFO  - status 0
+2024-05-08 12:01:21.122 [main] [com.example.socketdemo.utils.SQLUtil$1$1] [70] INFO  - ---事务完成---

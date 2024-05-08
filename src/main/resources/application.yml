@@ -1,0 +1,27 @@
+spring:
+  application:
+   name: socket-demo
+logging:
+  config: classpath:logback.xml
+project:
+  local:
+    listenPort: 9999
+    capturePath:
+      root: capture
+      zlCamera: zl
+      infrared: infrared
+      visionLight: visionLight
+    uploadPath:
+      root: F:\picture
+      ZL: zhenglian
+      HW: hw
+      KJG: kjg
+      allZL: all_zhenglian
+      video: video
+  zlCamera:
+    ip: 10.70.123.220
+    port: 6668
+  infraredUrl: http://10.70.123.229:8100/api/v1/jpgdata
+  patioUrl: http://10.70.123.228:7080/carsInfo/add
+
+

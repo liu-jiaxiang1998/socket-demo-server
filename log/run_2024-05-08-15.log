@@ -1,0 +1,17 @@
+2024-05-08 15:04:54.311 [main] [com.example.socketdemo.entity.ProjectProperties] [50] ERROR - 项目初始属性加载出错！class java.lang.Integer cannot be cast to class java.lang.String (java.lang.Integer and java.lang.String are in module java.base of loader 'bootstrap')
+2024-05-08 15:07:31.628 [main] [com.example.socketdemo.entity.ProjectProperties] [50] ERROR - 项目初始属性加载出错！class java.lang.Integer cannot be cast to class java.lang.String (java.lang.Integer and java.lang.String are in module java.base of loader 'bootstrap')
+2024-05-08 15:07:58.215 [main] [com.example.socketdemo.entity.ProjectProperties] [50] ERROR - 项目初始属性加载出错！class java.lang.Integer cannot be cast to class java.lang.String (java.lang.Integer and java.lang.String are in module java.base of loader 'bootstrap')
+2024-05-08 15:08:21.405 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕
+2024-05-08 15:11:53.148 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕
+2024-05-08 15:12:46.546 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕
+2024-05-08 15:13:23.731 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕
+2024-05-08 15:14:07.007 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕
+2024-05-08 15:14:40.767 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕
+2024-05-08 15:14:46.532 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕
+2024-05-08 15:14:51.557 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕
+2024-05-08 15:14:56.388 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕
+2024-05-08 15:15:05.717 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕
+2024-05-08 15:15:37.256 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕
+2024-05-08 15:20:15.496 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕
+2024-05-08 15:20:35.846 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕
+2024-05-08 15:21:02.014 [main] [com.example.socketdemo.entity.ProjectProperties] [48] INFO  - 项目初始属性加载完毕

@@ -2,6 +2,7 @@ package com.example.socketdemo.communicate;
 
 import com.example.socketdemo.entity.CameraCaptureCommand;
 import com.example.socketdemo.entity.CameraCaptureResult;
+import com.example.socketdemo.entity.FileType;
 import com.example.socketdemo.utils.CommonUtil;
 import com.example.socketdemo.utils.CrcUtil;
 import com.example.socketdemo.utils.HexUtil;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -18,28 +20,28 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
-* 和正脸相机通信
- * TODO
-* date: 2024/5/7
-* author: ljx
-*/
+ * 和正脸相机通信
+ * date: 2024/5/7
+ * author: ljx
+ */
 @Slf4j
 public class CameraSocket implements Runnable {
     private String cameraAddress;
     private int cameraPort;
 
     private BlockingQueue<CameraCaptureCommand> cameraCaptureCommandQueue;
-    private BlockingQueue<CameraCaptureResult> cameraCaptureResultQueue;
+    private ConcurrentHashMap<Integer, CameraCaptureResult> zlCameraCaptureResultMap;
 
-    public CameraSocket(String cameraAddress, int cameraPort, BlockingQueue<CameraCaptureCommand> commandQueue,
-                        BlockingQueue<CameraCaptureResult> cameraCaptureResultQueue) {
+    public CameraSocket(String cameraAddress, int cameraPort, BlockingQueue<CameraCaptureCommand> cameraCaptureCommandQueue,
+                        ConcurrentHashMap<Integer, CameraCaptureResult> zlCameraCaptureResultMap) {
         this.cameraAddress = cameraAddress;
         this.cameraPort = cameraPort;
 
-        this.cameraCaptureCommandQueue = commandQueue;
-        this.cameraCaptureResultQueue = cameraCaptureResultQueue;
+        this.cameraCaptureCommandQueue = cameraCaptureCommandQueue;
+        this.zlCameraCaptureResultMap = zlCameraCaptureResultMap;
     }
 
     @Override
@@ -50,7 +52,7 @@ public class CameraSocket implements Runnable {
 //                socket.setSoTimeout(5000);
 
                 SendThread sendThread = new SendThread(socket, cameraCaptureCommandQueue);
-                ReceiveThread receiveThread = new ReceiveThread(socket, cameraCaptureResultQueue);
+                ReceiveThread receiveThread = new ReceiveThread(socket, zlCameraCaptureResultMap);
                 sendThread.start();
                 receiveThread.start();
 
@@ -82,10 +84,15 @@ public class CameraSocket implements Runnable {
 
         @Override
         public void run() {
+            OutputStream outputStream = null;
+            try {
+                outputStream = socket.getOutputStream();
+            } catch (IOException e) {
+                log.error("正脸相机发送流异常！");
+            }
             while (socket.isConnected()) {
                 try {
                     CameraCaptureCommand captureCommand = cameraCaptureCommandQueue.take();
-                    OutputStream outputStream = socket.getOutputStream();
                     String command = CrcUtil.crcXmodem(captureCommand.getId().toString(), captureCommand.getLane().toString());
                     byte[] commandBytes = HexUtil.hexStringToByteArray(command);
                     outputStream.write(commandBytes);
@@ -99,22 +106,28 @@ public class CameraSocket implements Runnable {
 
     class ReceiveThread extends Thread {
         private Socket socket;
-        private BlockingQueue<CameraCaptureResult> cameraCaptureResultQueue;
+        private ConcurrentHashMap<Integer, CameraCaptureResult> zlCameraCaptureResultMap;
         private Logger logger;
 
-        ReceiveThread(Socket socket, BlockingQueue<CameraCaptureResult> cameraCaptureResultQueue) {
+        ReceiveThread(Socket socket, ConcurrentHashMap<Integer, CameraCaptureResult> zlCameraCaptureResultMap) {
             this.socket = socket;
-            this.cameraCaptureResultQueue = cameraCaptureResultQueue;
+            this.zlCameraCaptureResultMap = zlCameraCaptureResultMap;
             logger = LoggerFactory.getLogger(ReceiveThread.class);
         }
 
         @Override
         public void run() {
+            InputStream inputStream = null;
+            try {
+                inputStream = socket.getInputStream();
+            } catch (IOException e) {
+                log.error("正脸相机读取流异常！");
+                return;
+            }
             while (socket.isConnected()) {
                 try {
-                    InputStream inputStream = socket.getInputStream();
                     byte[] lengthData = new byte[7];
-                    inputStream.read(lengthData);
+                    while (inputStream.read(lengthData) == -1);
                     long startTime = System.currentTimeMillis();
                     int packLength = Integer.parseInt(HexUtil.byteArrayToHexString(lengthData).substring(6, 14), 16);
                     byte[] dataBody;
@@ -152,22 +165,17 @@ public class CameraSocket implements Runnable {
                     int index = 80;
                     int imgBytesLength = Integer.parseInt(data1.substring(index, index + 8), 16) * 2;
                     byte[] imgBytes = HexUtil.hexStringToByteArray(data1.substring(index + 8, index + 8 + imgBytesLength));
-//                    String dirName = "captureImgTmpDir";
-//                    if (!Files.isDirectory(Paths.get(dirName))) Files.createDirectories(Paths.get(dirName));
-//                    String pictureName = year + "_" + yue + "_" + ri + "_" + shi + "_" + fen + "_" + second + "_" + millisecond + "_" + laneNumber + ".jpg";
-//                    Path filePath = Paths.get(dirName, pictureName);
-                    Path filePath = Paths.get(CommonUtil.getCameraImagePath());
+
+                    Path filePath = Paths.get(CommonUtil.getLocalCapturePath(FileType.ZL));
                     Files.write(filePath, imgBytes);
                     long endTime = System.currentTimeMillis();
                     logger.info("抓拍耗时：" + (endTime - startTime) + "ms");
 
-
                     CameraCaptureResult cameraCaptureResult = new CameraCaptureResult();
 
                     cameraCaptureResult.setUuid(uuid);
-//                    cameraCaptureResult.setLane(passingFrame.getLane());
-//                    cameraCaptureResult.setDirection(passingFrame.getDirection());
-
+                    cameraCaptureResult.setLane(laneNumber);
+                    cameraCaptureResult.setDirection(-1);
                     cameraCaptureResult.setLeftImgPath(filePath.toAbsolutePath().toString());
                     cameraCaptureResult.setRightImgPath(filePath.toAbsolutePath().toString());
                     cameraCaptureResult.setImgName(filePath.getFileName().toString());
@@ -176,7 +184,7 @@ public class CameraSocket implements Runnable {
                     cameraCaptureResult.setSpeed(0f);
                     cameraCaptureResult.setLaneNumber(laneNumber);
                     cameraCaptureResult.setIsCompleted(true);
-                    cameraCaptureResultQueue.put(cameraCaptureResult);
+                    zlCameraCaptureResultMap.put(uuid, cameraCaptureResult);
                 } catch (Exception e) {
                     logger.error(e.getMessage());
                 }

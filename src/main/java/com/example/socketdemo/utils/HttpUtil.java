@@ -1,69 +1,83 @@
 package com.example.socketdemo.utils;
+
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 
 /**
-* Http请求工具类
- * TODO 可以测试图书管理系统！
-* date: 2024/5/7
-* author: ljx
-*/
+ * Http请求工具类
+ * 测试通过，可以正常使用！
+ * date: 2024/5/7
+ * author: ljx
+ */
+@Slf4j
 public class HttpUtil {
-        public static String doGet(String url) {
-            // 发送GET请求并获取响应
-            HttpResponse response = HttpRequest.get(url).execute();
-            // 返回响应内容
-            return response.body();
-        }
 
-        public static String doPost(String url, String data) {
-            // 发送POST请求并获取响应
-            HttpResponse response = HttpRequest.post(url).body(data).execute();
-            // 返回响应内容
-            return response.body();
+    public static HttpResponse doGet(String url, Map<String, String> headers) {
+        HttpRequest httpRequest = HttpRequest.get(url);
+        if (headers != null) {
+            for (Map.Entry<String, String> header : headers.entrySet()) {
+                httpRequest.header(header.getKey(), header.getValue());
+            }
         }
+        return httpRequest.execute();
+    }
 
-    public static String doPost(String url, Map<String, Object> data, Map<String, String> headers) {
-        // 转换数据为JSON格式
+    public static String doPost(String url, Object data, Map<String, String> headers) {
         ObjectMapper mapper = new ObjectMapper();
         String dataJson = null;
         try {
             dataJson = mapper.writeValueAsString(data);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error("参数序列化失败");
         }
-        // 发送POST请求并获取响应
-        HttpResponse response = HttpRequest.post(url)
-                .header("Content-Type", "application/json")
-                .body(dataJson)
-                .execute();
-
-        // 返回响应内容
-        return response.body();
+        return doPost(url, dataJson, headers);
     }
 
-    public static void main(String[] args) {
-        // 请求URL
-        String url = "http://10.70.123.228:7080/carsInfo/add";
 
-        // 请求数据
-        Map<String, Object> data = Map.of(
-                "deviceKey", "111",
-                "indexCode", "smallCar"
-                // 其他请求参数...
-        );
+    public static String doPost(String url, Map<String, Object> data, Map<String, String> headers) {
+        ObjectMapper mapper = new ObjectMapper();
+        String dataJson = null;
+        try {
+            dataJson = mapper.writeValueAsString(data);
+        } catch (JsonProcessingException e) {
+            log.error("参数序列化失败");
+        }
+        return doPost(url, dataJson, headers);
+    }
 
-        // 请求头
-        Map<String, String> headers = Map.of(
-                "Content-Type", "application/json"
-        );
+    public static String doPost(String url, String jsonBody, Map<String, String> headers) {
+        HttpRequest post = HttpRequest.post(url);
+        post.setConnectionTimeout(3000);
+        post.setReadTimeout(5000);
+        if (headers != null) {
+            for (Map.Entry<String, String> header : headers.entrySet()) {
+                post.header(header.getKey(), header.getValue());
+            }
+        }
+        HttpResponse httpResponse = post.body(jsonBody).execute();
+        return httpResponse.body();
+    }
 
-        // 发送POST请求
-        String response = doPost(url, data, headers);
-        System.out.println("POST响应：" + response);
+    public static String doPut(String url, Map<String, Object> data, Map<String, String> headers) {
+        ObjectMapper mapper = new ObjectMapper();
+        String dataJson = null;
+        try {
+            dataJson = mapper.writeValueAsString(data);
+        } catch (JsonProcessingException e) {
+            log.error("参数序列化失败");
+        }
+        HttpRequest put = HttpRequest.put(url);
+        if (headers != null) {
+            for (Map.Entry<String, String> header : headers.entrySet()) {
+                put.header(header.getKey(), header.getValue());
+            }
+        }
+        HttpResponse httpResponse = put.body(dataJson).execute();
+        return httpResponse.body();
     }
 }

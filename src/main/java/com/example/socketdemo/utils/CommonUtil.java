@@ -18,43 +18,44 @@ public class CommonUtil {
         return dateFormat.format(currentTime);
     }
 
-    public static String getInfraredImagePath() {
-        String directoryPath = System.getProperty("user.dir") + System.getProperty("file.separator") + ProjectProperties.LOCAL_CAPTURE_ROOT_PATH + System.getProperty("file.separator") +
-                ProjectProperties.LOCAL_INFRARED_PATH;
-        File directory = new File(directoryPath);
-        if (!directory.exists()) directory.mkdirs();
-        return directoryPath + System.getProperty("file.separator") + CommonUtil.formatFileName(new Date()) + ".jpg";
-    }
-
-    public static String getCameraImagePath() {
-        String directoryPath = System.getProperty("user.dir") + System.getProperty("file.separator") + ProjectProperties.LOCAL_CAPTURE_ROOT_PATH + System.getProperty("file.separator") +
-                ProjectProperties.LOCAL_CAMERA_PATH;
-        File directory = new File(directoryPath);
-        if (!directory.exists()) directory.mkdirs();
-        return directoryPath + System.getProperty("file.separator") + CommonUtil.formatFileName(new Date()) + ".jpg";
-    }
-
-    public static String getRemoteUploadPath(FileType type, String localPath) {
-        StringBuilder remoteRootPath = new StringBuilder();
-        remoteRootPath.append(FILE_SEPARATOR).append(ProjectProperties.REMOTE_CAPTURE_ROOT_PATH).append(FILE_SEPARATOR);
+    public static String getLocalCapturePath(FileType type) {
+        StringBuilder uploadRootPath = new StringBuilder();
+        uploadRootPath.append(System.getProperty("user.dir")).append(FILE_SEPARATOR).append(ProjectProperties.LOCAL_CAPTURE_ROOT_PATH).append(FILE_SEPARATOR);
         switch (type) {
-            case CE:
-                remoteRootPath.append(ProjectProperties.REMOTE_CE_PATH);
+            case ZL:
+                uploadRootPath.append(ProjectProperties.LOCAL_CAPTURE_CAMERA_PATH);
                 break;
-            case CE_HW:
-                remoteRootPath.append(ProjectProperties.REMOTE_CE_HW_PATH);
+            case ZL_HW:
+                uploadRootPath.append(ProjectProperties.LOCAL_CAPTURE_INFRARED_PATH);
                 break;
-            case CROP:
-                remoteRootPath.append(ProjectProperties.REMOTE_CROP_PATH);
-                break;
-            case HEAD:
-                remoteRootPath.append(ProjectProperties.REMOTE_HEAD_PATH);
-                break;
-            case ALL_CE:
-                remoteRootPath.append(ProjectProperties.REMOTE_ALL_CE_PATH);
+            case ZL_KJG:
+                uploadRootPath.append(ProjectProperties.LOCAL_CAPTURE_VISION_LIGHT_PATH);
                 break;
         }
-        remoteRootPath.append(FILE_SEPARATOR);
+
+        File directory = new File(uploadRootPath.toString());
+        if (!directory.exists()) directory.mkdirs();
+        return uploadRootPath.append(FILE_SEPARATOR).append(CommonUtil.formatFileName(new Date())).append(".jpg").toString();
+    }
+
+    public static String getLocalUploadPath(FileType type, String localPath) {
+        StringBuilder uploadRootPath = new StringBuilder();
+        uploadRootPath.append(ProjectProperties.LOCAL_UPLOAD_ROOT_PATH).append(FILE_SEPARATOR);
+        switch (type) {
+            case ZL:
+                uploadRootPath.append(ProjectProperties.LOCAL_UPLOAD_ZL_PATH);
+                break;
+            case ZL_HW:
+                uploadRootPath.append(ProjectProperties.LOCAL_UPLOAD_HW_PATH);
+                break;
+            case ZL_KJG:
+                uploadRootPath.append(ProjectProperties.LOCAL_UPLOAD_KJG_PATH);
+                break;
+            case ALL_ZL:
+                uploadRootPath.append(ProjectProperties.LOCAL_UPLOAD_ALL_ZL_PATH);
+                break;
+        }
+        uploadRootPath.append(FILE_SEPARATOR);
         String timeStr = localPath.substring(localPath.lastIndexOf(FILE_SEPARATOR), localPath.lastIndexOf("."));
         List<String> stringList = Arrays.stream(timeStr.split("_")).map(a -> {
             if (a.startsWith("0")) {
@@ -63,17 +64,10 @@ public class CommonUtil {
                 return a;
             }
         }).collect(Collectors.toList());
-        return remoteRootPath.append(stringList.get(0)).append(FILE_SEPARATOR)
+        return uploadRootPath.append(stringList.get(0)).append(FILE_SEPARATOR)
                 .append(stringList.get(1)).append(FILE_SEPARATOR)
                 .append(stringList.get(2)).append(FILE_SEPARATOR)
-                .append(stringList.get(3)).append(FILE_SEPARATOR).toString();
-    }
-
-    public static String getRemoteAbsolutePath(String remoteFTPPath) {
-        if (ProjectProperties.REMOTE_FTP_PATH.endsWith("\\")) {
-            return ProjectProperties.REMOTE_FTP_PATH.substring(0, ProjectProperties.REMOTE_FTP_PATH.lastIndexOf("\\")) + remoteFTPPath;
-        } else {
-            return ProjectProperties.REMOTE_FTP_PATH + remoteFTPPath;
-        }
+                .append(stringList.get(3)).append(FILE_SEPARATOR)
+                .append(localPath.substring(localPath.lastIndexOf(FILE_SEPARATOR))).toString();
     }
 }
