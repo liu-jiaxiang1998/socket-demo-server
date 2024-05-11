@@ -58,66 +58,69 @@ public class GKJServerSocket implements Runnable {
             /** 这里就是单个连接的情况！！要是能够接收多个Socket，下面的实现就有问题了！ */
             try (Socket socket = serverSocket.accept()) {
                 log.info("建立来自小盒子的连接");
+                socket.setKeepAlive(true);
                 ObjectMapper objectMapper = new ObjectMapper();
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
-                while (socket.isConnected()) {
+                while (socket.isConnected() && !socket.isClosed()) {
                     try {
                         String receivedData;
-                        while (( receivedData = in.readLine())==null);
-                        log.info("收到来自小盒子的信息是 " + receivedData);
-                        ToGKJMessage toGKJMessage = objectMapper.readValue(receivedData, ToGKJMessage.class);
-                        if (toGKJMessage.getType() == ToGKJMessageType.CAPTURE_FRAME) {
-                            /** 收到小盒子的抓拍帧 */
-                            CameraCaptureCommand captureCommand = objectMapper.readValue(toGKJMessage.getContent(), CameraCaptureCommand.class);
-                            cameraCaptureCommandQueue.put(captureCommand);
+                        if ((receivedData = in.readLine()) != null) {
+                            log.info("收到来自小盒子的信息是 " + receivedData);
+                            ToGKJMessage toGKJMessage = objectMapper.readValue(receivedData, ToGKJMessage.class);
+                            if (toGKJMessage.getType() == ToGKJMessageType.CAPTURE_FRAME) {
+                                /** 收到小盒子的抓拍帧 */
+                                CameraCaptureCommand captureCommand = objectMapper.readValue(toGKJMessage.getContent(), CameraCaptureCommand.class);
+                                cameraCaptureCommandQueue.put(captureCommand);
 
-                            /** 异步调用红外相机抓拍！ */
-                            Callable<String> infraredSocket = new InfraredSocket();
-                            CompletableFuture<String> completableFutureHW = CompletableFuture.supplyAsync(() -> {
-                                try {
-                                    return infraredSocket.call();
-                                } catch (Exception e) {
-                                    log.error("调用红外相机出现问题！");
-                                    throw new RuntimeException(e);
-                                }
-                            }, executorService);
-                            completableFutureHW.thenAccept(result -> {
-                                zlHWCameraCaptureResultMap.put(captureCommand.getId(), result);
-                            });
+                                /** 异步调用红外相机抓拍！ */
+                                Callable<String> infraredSocket = new InfraredSocket();
+                                CompletableFuture<String> completableFutureHW = CompletableFuture.supplyAsync(() -> {
+                                    try {
+                                        return infraredSocket.call();
+                                    } catch (Exception e) {
+                                        log.error("调用红外相机出现问题！");
+                                        throw new RuntimeException(e);
+                                    }
+                                }, executorService);
+                                completableFutureHW.thenAccept(result -> {
+                                    zlHWCameraCaptureResultMap.put(captureCommand.getId(), result);
+                                });
 
-                            /** 异步调用可见光相机抓拍！ */
-                            Callable<String> visibleLightSocket = new VisibleLightSocket();
-                            CompletableFuture<String> completableFutureKJG = CompletableFuture.supplyAsync(() -> {
-                                try {
-                                    return visibleLightSocket.call();
-                                } catch (Exception e) {
-                                    log.error("调用可见光相机出现问题！");
-                                    throw new RuntimeException(e);
-                                }
-                            }, executorService);
-                            completableFutureKJG.thenAccept(result -> {
-                                zlKJGCameraCaptureResultMap.put(captureCommand.getId(), result);
-                            });
+                                /** 异步调用可见光相机抓拍！ */
+                                Callable<String> visibleLightSocket = new VisibleLightSocket();
+                                CompletableFuture<String> completableFutureKJG = CompletableFuture.supplyAsync(() -> {
+                                    try {
+                                        return visibleLightSocket.call();
+                                    } catch (Exception e) {
+                                        log.error("调用可见光相机出现问题！");
+                                        throw new RuntimeException(e);
+                                    }
+                                }, executorService);
+                                completableFutureKJG.thenAccept(result -> {
+                                    zlKJGCameraCaptureResultMap.put(captureCommand.getId(), result);
+                                });
 
-                        } else if (toGKJMessage.getType() == ToGKJMessageType.WEIGHT_FRAME) {
-                            /** 收到小盒子的称重帧 */
-                            WeightFrame weightFrame = objectMapper.readValue(toGKJMessage.getContent(), WeightFrame.class);
-                            weightFrameMap.put(weightFrame.getUuid(), weightFrame);
-                        } else if (toGKJMessage.getType() == ToGKJMessageType.DETECT_FAIL_FRAME
-                                || toGKJMessage.getType() == ToGKJMessageType.DETECT_SUCCESS_FRAME) {
-                            /** 收到小盒子的检测帧 */
-                            Object[] arrays = objectMapper.readValue(toGKJMessage.getContent(), Object[].class);
-                            mainProcessExecutorService.submit(new MainProcess(weightFrameMap, zlCameraCaptureResultMap,
-                                    zlHWCameraCaptureResultMap, zlKJGCameraCaptureResultMap, arrays,toGKJMessage.getType()));
-                        } else {
-                            log.error("未知的消息类型，跳过！");
+                            } else if (toGKJMessage.getType() == ToGKJMessageType.WEIGHT_FRAME) {
+                                /** 收到小盒子的称重帧 */
+                                WeightFrame weightFrame = objectMapper.readValue(toGKJMessage.getContent(), WeightFrame.class);
+                                weightFrameMap.put(weightFrame.getUuid(), weightFrame);
+                            } else if (toGKJMessage.getType() == ToGKJMessageType.DETECT_FAIL_FRAME
+                                    || toGKJMessage.getType() == ToGKJMessageType.DETECT_SUCCESS_FRAME) {
+                                /** 收到小盒子的检测帧 */
+                                Object[] arrays = objectMapper.readValue(toGKJMessage.getContent(), Object[].class);
+                                mainProcessExecutorService.submit(new MainProcess(weightFrameMap, zlCameraCaptureResultMap,
+                                        zlHWCameraCaptureResultMap, zlKJGCameraCaptureResultMap, arrays, toGKJMessage.getType()));
+                            } else {
+                                log.error("未知的消息类型，跳过！");
+                            }
                         }
                     } catch (Exception e) {
                         log.error(e.getMessage());
                     }
                 }
+                log.info("和小盒子的连接已断开，重新连接！");
             } catch (Exception e) {
-                log.error(e.getMessage());
+                log.error("工控机接收小盒子信息出错！", e);
                 try {
                     Thread.sleep(10000);
                 } catch (InterruptedException ex) {

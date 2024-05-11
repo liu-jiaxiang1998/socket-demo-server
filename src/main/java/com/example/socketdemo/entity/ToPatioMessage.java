@@ -11,20 +11,20 @@ public class ToPatioMessage {
     private String chepai;
     private Integer zhoushu;
     private String zhouzuluntai;
-    private Float weight;
-    private Integer manzailv;
-    private Integer chechang;
-    private Integer chekuan;
-    private Integer chegao;
-    private Integer xiangchang;
-    private Integer xiangkuan;
-    private Integer xianggao;
-    private Integer lidigao;
-    private Integer lanbanchang;
-    private Integer lanbangao;
+    private Double weight;
+    private Double manzailv;
+    private Double chechang;
+    private Double chekuan;
+    private Double chegao;
+    private Double xiangchang;
+    private Double xiangkuan;
+    private Double xianggao;
+    private Double lidigao;
+    private Double lanbanchang;
+    private Double lanbangao;
     private Integer manhuo;
     private Integer czHuowu;
-    private Float chengzhong;
+    private Double chengzhong;
     private String pictureHead;
     private String pictureTail;
     private String pictureCrop;
@@ -171,101 +171,101 @@ public class ToPatioMessage {
         return this;
     }
 
-    public Float getWeight() {
+    public Double getWeight() {
         return weight;
     }
 
-    public ToPatioMessage setWeight(Float weight) {
+    public ToPatioMessage setWeight(Double weight) {
         this.weight = weight;
         return this;
     }
 
-    public Integer getManzailv() {
+    public Double getManzailv() {
         return manzailv;
     }
 
-    public ToPatioMessage setManzailv(Integer manzailv) {
+    public ToPatioMessage setManzailv(Double manzailv) {
         this.manzailv = manzailv;
         return this;
     }
 
-    public Integer getChechang() {
+    public Double getChechang() {
         return chechang;
     }
 
-    public ToPatioMessage setChechang(Integer chechang) {
+    public ToPatioMessage setChechang(Double chechang) {
         this.chechang = chechang;
         return this;
     }
 
-    public Integer getChekuan() {
+    public Double getChekuan() {
         return chekuan;
     }
 
-    public ToPatioMessage setChekuan(Integer chekuan) {
+    public ToPatioMessage setChekuan(Double chekuan) {
         this.chekuan = chekuan;
         return this;
     }
 
-    public Integer getChegao() {
+    public Double getChegao() {
         return chegao;
     }
 
-    public ToPatioMessage setChegao(Integer chegao) {
+    public ToPatioMessage setChegao(Double chegao) {
         this.chegao = chegao;
         return this;
     }
 
-    public Integer getXiangchang() {
+    public Double getXiangchang() {
         return xiangchang;
     }
 
-    public ToPatioMessage setXiangchang(Integer xiangchang) {
+    public ToPatioMessage setXiangchang(Double xiangchang) {
         this.xiangchang = xiangchang;
         return this;
     }
 
-    public Integer getXiangkuan() {
+    public Double getXiangkuan() {
         return xiangkuan;
     }
 
-    public ToPatioMessage setXiangkuan(Integer xiangkuan) {
+    public ToPatioMessage setXiangkuan(Double xiangkuan) {
         this.xiangkuan = xiangkuan;
         return this;
     }
 
-    public Integer getXianggao() {
+    public Double getXianggao() {
         return xianggao;
     }
 
-    public ToPatioMessage setXianggao(Integer xianggao) {
+    public ToPatioMessage setXianggao(Double xianggao) {
         this.xianggao = xianggao;
         return this;
     }
 
-    public Integer getLidigao() {
+    public Double getLidigao() {
         return lidigao;
     }
 
-    public ToPatioMessage setLidigao(Integer lidigao) {
+    public ToPatioMessage setLidigao(Double lidigao) {
         this.lidigao = lidigao;
         return this;
     }
 
-    public Integer getLanbanchang() {
+    public Double getLanbanchang() {
         return lanbanchang;
     }
 
-    public ToPatioMessage setLanbanchang(Integer lanbanchang) {
+    public ToPatioMessage setLanbanchang(Double lanbanchang) {
         this.lanbanchang = lanbanchang;
         return this;
     }
 
-    public Integer getLanbangao() {
+    public Double getLanbangao() {
         return lanbangao;
     }
 
-    public ToPatioMessage setLanbangao(Integer lanbangao) {
+    public ToPatioMessage setLanbangao(Double lanbangao) {
         this.lanbangao = lanbangao;
         return this;
     }
@@ -288,11 +288,11 @@ public class ToPatioMessage {
         return this;
     }
 
-    public Float getChengzhong() {
+    public Double getChengzhong() {
         return chengzhong;
     }
 
-    public ToPatioMessage setChengzhong(Float chengzhong) {
+    public ToPatioMessage setChengzhong(Double chengzhong) {
         this.chengzhong = chengzhong;
         return this;
     }

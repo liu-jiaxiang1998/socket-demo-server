@@ -2,6 +2,9 @@ package com.example.socketdemo.utils;
 
 import com.example.socketdemo.entity.FileType;
 import com.example.socketdemo.entity.ProjectProperties;
+import com.example.socketdemo.entity.ToPatioMessage;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -35,7 +38,11 @@ public class CommonUtil {
 
         File directory = new File(uploadRootPath.toString());
         if (!directory.exists()) directory.mkdirs();
-        return uploadRootPath.append(FILE_SEPARATOR).append(CommonUtil.formatFileName(new Date())).append(".jpg").toString();
+        if (type == FileType.ZL) {
+            return uploadRootPath.append(FILE_SEPARATOR).append(CommonUtil.formatFileName(new Date())).append("_1_zl").append(".jpg").toString();
+        } else {
+            return uploadRootPath.append(FILE_SEPARATOR).append(CommonUtil.formatFileName(new Date())).append(".jpg").toString();
+        }
     }
 
     public static String getLocalUploadPath(FileType type, String localPath) {
@@ -55,7 +62,6 @@ public class CommonUtil {
                 uploadRootPath.append(ProjectProperties.LOCAL_UPLOAD_ALL_ZL_PATH);
                 break;
         }
-        uploadRootPath.append(FILE_SEPARATOR);
         String timeStr = localPath.substring(localPath.lastIndexOf(FILE_SEPARATOR), localPath.lastIndexOf("."));
         List<String> stringList = Arrays.stream(timeStr.split("_")).map(a -> {
             if (a.startsWith("0")) {
@@ -68,6 +74,29 @@ public class CommonUtil {
                 .append(stringList.get(1)).append(FILE_SEPARATOR)
                 .append(stringList.get(2)).append(FILE_SEPARATOR)
                 .append(stringList.get(3)).append(FILE_SEPARATOR)
-                .append(localPath.substring(localPath.lastIndexOf(FILE_SEPARATOR))).toString();
+                .append(localPath.substring(localPath.lastIndexOf(FILE_SEPARATOR) + 1)).toString();
+    }
+
+    /**
+     * 将 Int 转为两个字节的16进制字符串！
+     */
+    public static String intToHexString(int num) {
+        // 将整数按位与运算获取最低8位
+        int lowerByte = num & 0xFF;
+        // 将整数右移8位再按位与运算获取次低8位
+        int upperByte = (num >> 8) & 0xFF;
+        // 将两个字节的整数格式化为十六进制字符串
+        String hexString = String.format("%02X %02X", upperByte, lowerByte);
+        return hexString;
+    }
+
+    public static void main(String[] args) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ToPatioMessage toPatioMessage = new ToPatioMessage();
+        try {
+            System.out.println(objectMapper.writeValueAsString(toPatioMessage));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

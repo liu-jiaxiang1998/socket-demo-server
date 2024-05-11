@@ -50,7 +50,7 @@ public class MainProcess implements Runnable {
             /** 获取uuid对应的正脸相机抓拍结果！ */
             CameraCaptureResult cameraCaptureResult;
             int count = 0;
-            while ((cameraCaptureResult = zlCameraCaptureResultMap.get(uuid)) == null && count++ < 3)
+            while ((cameraCaptureResult = zlCameraCaptureResultMap.get(uuid)) == null && count++ < 5)
                 Thread.sleep(1000);
             zlCameraCaptureResultMap.remove(uuid);
             if (cameraCaptureResult == null) {
@@ -60,10 +60,10 @@ public class MainProcess implements Runnable {
             /** 获取uuid对应的称重帧 */
             WeightFrame weightFrame;
             count = 0;
-            while ((weightFrame = weightFrameMap.get(uuid)) == null && count++ < 3) Thread.sleep(1000);
+            while ((weightFrame = weightFrameMap.get(uuid)) == null && count++ < 5) Thread.sleep(1000);
             weightFrameMap.remove(uuid);
             if (weightFrame == null) {
-                log.error("获取不到uuid为 " + uuid + " 的称重帧！");
+                log.error("睡眠3s仍然获取不到uuid为 " + uuid + " 的称重帧！放弃本条记录！");
                 return;
             }
 
@@ -71,12 +71,18 @@ public class MainProcess implements Runnable {
                 /** 收到小盒子的检测失败帧 */
                 int status = (Integer) arrays[0];
                 int lane = (Integer) arrays[2];
-                Float visionWeight = (Float) arrays[3];
+                Integer visionWeight = (Integer) arrays[3];
                 String ceImgName = (String) arrays[arrays.length - 1];
                 String ceImgAbsolutePath = (String) arrays[arrays.length - 2];
                 if (status == 0 || status == -1) {
                     String leftImgPath = cameraCaptureResult.getLeftImgPath();
-                    String zlImgAbsolutePath = CommonUtil.getLocalUploadPath(FileType.ZL, leftImgPath);
+                    String zlImgAbsolutePath = CommonUtil.getLocalUploadPath(FileType.ALL_ZL, leftImgPath);
+                    while (!Files.exists(Paths.get(leftImgPath))) {
+                        log.info("正脸抓拍图片还未获取到，sleep 1s!!");
+                        Thread.sleep(1000);
+                    }
+//                    Files.createFile(Paths.get(zlImgAbsolutePath));
+                    Files.createDirectories(Paths.get(zlImgAbsolutePath).getParent());
                     Files.move(Paths.get(leftImgPath), Paths.get(zlImgAbsolutePath));
 
                     String zlHWImgCapturePath = zlHWCameraCaptureResultMap.remove(uuid);
@@ -94,10 +100,10 @@ public class MainProcess implements Runnable {
                                 .setDeviceKey("111").setIndexCode("smallCar").setVihiclePoint(3).setName(ceImgName)
                                 .setNamefront(cameraCaptureResult.getImgName() + "_front").setChedaohao(lane)
                                 .setPasstime(cameraCaptureResult.getImgName().substring(0, cameraCaptureResult.getImgName().lastIndexOf(".")))
-                                .setChepai(cameraCaptureResult.getLicencePlate())
-                                .setZhoushu(0).setZhouzuluntai(" ").setWeight(visionWeight).setManzailv(0)
-                                .setChechang(0).setChekuan(0).setChegao(0).setXiangchang(0).setXiangkuan(0).setXianggao(0).setLidigao(0).setLanbanchang(0).setLanbangao(0)
-                                .setManhuo(0).setCzHuowu(-1).setChengzhong(weightFrame.getWeight())
+                                .setChepai(cameraCaptureResult.getLicencePlate().trim())
+                                .setZhoushu(0).setZhouzuluntai(" ").setWeight(visionWeight.doubleValue()).setManzailv(0d)
+                                .setChechang(0d).setChekuan(0d).setChegao(0d).setXiangchang(0d).setXiangkuan(0d).setXianggao(0d).setLidigao(0d).setLanbanchang(0d).setLanbangao(0d)
+                                .setManhuo(0).setCzHuowu(-1).setChengzhong(weightFrame.getWeight().doubleValue())
                                 .setPictureHead(" ").setPictureTail(" ").setPictureCrop(" ").setPictureZl(zlImgAbsolutePath).setPictureCl(ceImgAbsolutePath)
                                 .setVideo("----").setFugai(100).setCorpCoordinate(" ").setHeadCoordinate(" ").setTyreCoordinate(" ")
                                 .setSpeed(weightFrame.getSpeed());
@@ -111,6 +117,10 @@ public class MainProcess implements Runnable {
             } else if (type == ToGKJMessageType.DETECT_SUCCESS_FRAME) {
                 /** 收到小盒子的检测成功帧 */
                 log.info("uuid为 " + uuid + " 的图片货车检测成功");
+//                int i = 0;
+//                for (Object obj : arrays) {
+//                    log.info( i++ + " " + obj.getClass().getName());
+//                }
                 String ceImgName = (String) arrays[arrays.length - 1];
                 String ceImgAbsolutePath = (String) arrays[arrays.length - 2];
                 String ceImgAbsolutePath2 = (String) arrays[arrays.length - 3];
@@ -122,6 +132,7 @@ public class MainProcess implements Runnable {
                 if (zlHWImgCapturePath != null) {
                     try {
                         String zlHWImgAbsolutePath = CommonUtil.getLocalUploadPath(FileType.ZL_HW, zlHWImgCapturePath);
+                        Files.createDirectories(Paths.get(zlHWImgAbsolutePath).getParent());
                         Files.move(Paths.get(zlHWImgCapturePath), Paths.get(zlHWImgAbsolutePath));
                     } catch (Exception e) {
                         log.error("转移工控机红外图片出错");
@@ -130,6 +141,7 @@ public class MainProcess implements Runnable {
                 if (zlKJGImgCapturePath != null) {
                     try {
                         String zlKJGImgAbsolutePath = CommonUtil.getLocalUploadPath(FileType.ZL_KJG, zlKJGImgCapturePath);
+                        Files.createDirectories(Paths.get(zlKJGImgAbsolutePath).getParent());
                         Files.move(Paths.get(zlKJGImgCapturePath), Paths.get(zlKJGImgAbsolutePath));
                     } catch (Exception e) {
                         log.error("转移工控机可见光图片出错");
@@ -140,25 +152,39 @@ public class MainProcess implements Runnable {
                 String[] zlImgNames = zlImgName.split("_");
                 String leftImgPath = cameraCaptureResult.getLeftImgPath();
                 String zlImgAbsolutePath = CommonUtil.getLocalUploadPath(FileType.ZL, leftImgPath);
+
+                while (!Files.exists(Paths.get(leftImgPath))) {
+                    log.info("正脸抓拍图片还未获取到，sleep 1s!!");
+                    Thread.sleep(1000);
+                }
+//                Files.createFile(Paths.get(zlImgAbsolutePath));
+                Files.createDirectories(Paths.get(zlImgAbsolutePath).getParent());
                 Files.move(Paths.get(leftImgPath), Paths.get(zlImgAbsolutePath));
 
-                String imgNameFront = cameraCaptureResult.getImgName() + "_front";
-                String[] zhou1 = {(String) arrays[8], (String) arrays[9], (String) arrays[10], (String) arrays[11], (String) arrays[12], (String) arrays[13]};
-                String[] zhou2 = {(String) arrays[14], (String) arrays[15], (String) arrays[16], (String) arrays[17], (String) arrays[18], (String) arrays[19]};
+                String timeStr = cameraCaptureResult.getImgName().substring(0, cameraCaptureResult.getImgName().lastIndexOf("_1")).replace("_", "");
+                String picture_name = cameraCaptureResult.getImgName().substring(0, cameraCaptureResult.getImgName().lastIndexOf("_"));
+                String imgNameFront = timeStr + "_front";
+                String[] zhou1 = {String.valueOf(arrays[8]), String.valueOf(arrays[9]), String.valueOf(arrays[10]), String.valueOf(arrays[11]), String.valueOf(arrays[12]), String.valueOf(arrays[13])};
+                String[] zhou2 = {String.valueOf(arrays[14]), String.valueOf(arrays[15]), String.valueOf(arrays[16]), String.valueOf(arrays[17]), String.valueOf(arrays[18]), String.valueOf(arrays[19])};
 
                 String zhouzuxihao = String.join(",", zhou1);
                 String zhouzuluntai = String.join(",", zhou2);
+
                 if (weightFrame.getWeight() != 0) {
                     SQLUtil.executeSpecialUpdateInTransaction(zlImgNames[0], zlImgNames[1], zlImgNames[2], zlImgNames[3], zlImgNames[4],
-                            zlImgName.substring(0, zlImgName.lastIndexOf(".")), ceImgName, imgNameFront, (String) arrays[31], (String) arrays[52],
-                            weightFrame.getSpeed().toString(), cameraCaptureResult.getLicencePlate(), cameraCaptureResult.getLaneNumber().toString(),
-                            (String) arrays[6], (String) arrays[7], zhouzuxihao, zhouzuluntai, (String) arrays[20],
-                            (String) arrays[21], (String) arrays[22], (String) arrays[23], "0", (String) arrays[24],
-                            (String) arrays[25], (String) arrays[41], (String) arrays[42], (String) arrays[26], (Float) arrays[32] < 49 ? "0" : (String) arrays[33],
-                            (String) arrays[38], (String) arrays[39], (String) arrays[40], (String) arrays[27], (String) arrays[34], (String) arrays[43],
-                            (Float) arrays[29] > 49 ? "1" : (String) arrays[29], "", (Float) arrays[20] > 1800 ? "1" : "0", (Float) arrays[21] > 255 ? "1" : "0",
-                            (Float) arrays[22] > 400 ? "1" : "0", (String) arrays[35], (String) arrays[36], (String) arrays[37], weightFrame.getWeight().toString(), (String) arrays[32],
-                            (String) arrays[44], (String) arrays[45], (String) arrays[46], zlImgAbsolutePath, ceImgAbsolutePath, ceCropImgAbsolutePath, ceHeadImgAbsolutePath, " "
+                            timeStr, picture_name, imgNameFront, String.valueOf(0), cameraCaptureResult.getColor().trim(),
+                            String.valueOf(weightFrame.getSpeed()), cameraCaptureResult.getLicencePlate().trim(), String.valueOf(cameraCaptureResult.getLaneNumber()),
+                            String.valueOf(arrays[6]), String.valueOf(arrays[7]), zhouzuxihao, zhouzuluntai, String.valueOf(arrays[20]),
+                            String.valueOf(arrays[21]), String.valueOf(arrays[22]), String.valueOf(arrays[23]), String.valueOf(0),
+                            String.valueOf(arrays[24]), String.valueOf(arrays[25]), String.valueOf(arrays[41]), String.valueOf(arrays[42]),
+                            String.valueOf(arrays[26]), String.valueOf(0), String.valueOf(arrays[38]),
+                            String.valueOf(arrays[39]), String.valueOf(arrays[40]), String.valueOf(arrays[27]),
+                            String.valueOf(arrays[34]), String.valueOf(arrays[43]), String.valueOf(1), String.valueOf(0),
+                            String.valueOf(0),
+                            String.valueOf(0), String.valueOf(0),
+                            String.valueOf(arrays[35]), String.valueOf(arrays[36]), String.valueOf(arrays[37]),
+                            String.valueOf(weightFrame.getWeight()), String.valueOf(arrays[32]), String.valueOf(arrays[44]), String.valueOf(arrays[45]), String.valueOf(arrays[46]),
+                            zlImgAbsolutePath, ceImgAbsolutePath, ceCropImgAbsolutePath, ceHeadImgAbsolutePath, " "
                     );
                     log.info(" uuid为 " + uuid + " 的数据成功插入数据库！");
 
@@ -167,11 +193,13 @@ public class MainProcess implements Runnable {
                                 .setDeviceKey("111").setIndexCode("2222").setVihiclePoint(3).setName(ceImgName)
                                 .setNamefront(imgNameFront).setChedaohao((Integer) arrays[2])
                                 .setPasstime(zlImgName.substring(0, zlImgName.lastIndexOf(".")))
-                                .setChepai(cameraCaptureResult.getLicencePlate())
-                                .setZhoushu((Integer) arrays[6]).setZhouzuluntai(zhouzuluntai).setWeight((Float) arrays[32]).setManzailv((Integer) arrays[26])
-                                .setChechang((Integer) arrays[20]).setChekuan((Integer) arrays[21]).setChegao((Integer) arrays[22]).setXiangchang((Integer) arrays[23])
-                                .setXiangkuan(0).setXianggao((Integer) arrays[24]).setLidigao((Integer) arrays[25]).setLanbanchang((Integer) arrays[41]).setLanbangao((Integer) arrays[42])
-                                .setManhuo((Integer) arrays[34]).setCzHuowu((Integer) arrays[43]).setChengzhong(weightFrame.getWeight())
+                                .setChepai(cameraCaptureResult.getLicencePlate().trim())
+                                .setZhoushu((Integer) arrays[6]).setZhouzuluntai(zhouzuluntai).setWeight(Double.valueOf(arrays[32].toString())).setManzailv(Double.valueOf(arrays[26].toString()))
+                                .setChechang(Double.valueOf(arrays[20].toString())).setChekuan(Double.valueOf(arrays[21].toString()))
+                                .setChegao(Double.valueOf(arrays[22].toString())).setXiangchang(Double.valueOf(arrays[23].toString()))
+                                .setXiangkuan(0d).setXianggao(Double.valueOf(arrays[24].toString())).setLidigao(Double.valueOf(arrays[25].toString()))
+                                .setLanbanchang(Double.valueOf(arrays[41].toString())).setLanbangao(Double.valueOf(arrays[42].toString()))
+                                .setManhuo((Integer) arrays[34]).setCzHuowu((Integer) arrays[43]).setChengzhong(weightFrame.getWeight().doubleValue())
                                 .setPictureHead(ceHeadImgAbsolutePath).setPictureTail(" ").setPictureCrop(ceCropImgAbsolutePath).setPictureZl(zlImgAbsolutePath).setPictureCl(ceImgAbsolutePath)
                                 .setVideo("----").setFugai((Integer) arrays[27]).setCorpCoordinate((String) arrays[44]).setHeadCoordinate((String) arrays[45]).setTyreCoordinate((String) arrays[46])
                                 .setSpeed(weightFrame.getSpeed());
@@ -184,7 +212,7 @@ public class MainProcess implements Runnable {
                 }
             }
         } catch (Exception e) {
-            log.error("工控机主体流程出错！" + e.getMessage());
+            log.error("工控机主体流程出错！", e);
         }
     }
 }
